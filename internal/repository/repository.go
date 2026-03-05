@@ -11,7 +11,7 @@ import (
 
 type EventRepository interface {
 	Create(ctx context.Context, e domain.Event) (uuid.UUID, error)
-	// GetByID(ctx context.Context, id uuid.UUID) (domain.Event, error)
+	GetByID(ctx context.Context, id uuid.UUID) (domain.Event, error)
 	// GetByIDForUpdate(ctx context.Context, q Querier, id uuid.UUID) (domain.Event, error)
 }
 

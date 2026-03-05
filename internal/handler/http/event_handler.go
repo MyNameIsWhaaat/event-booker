@@ -2,11 +2,14 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/MyNameIsWhaaat/event-booker/internal/domain"
 	"github.com/MyNameIsWhaaat/event-booker/internal/service"
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 type createEventRequest struct {
@@ -46,4 +49,26 @@ func (h *Handler) createEvent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(map[string]string{"id": id.String()})
+}
+
+func (h *Handler) getEvent(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	ev, err := h.eventSvc.GetEvent(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, domain.ErrEventNotFound) {
+			http.Error(w, "event not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	_ = json.NewEncoder(w).Encode(ev)
 }

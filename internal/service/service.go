@@ -2,11 +2,14 @@ package service
 
 import (
 	"context"
+
+	"github.com/MyNameIsWhaaat/event-booker/internal/domain"
 	"github.com/google/uuid"
 )
 
 type EventService interface {
 	CreateEvent(ctx context.Context, req CreateEventRequest) (uuid.UUID, error)
+	GetEvent(ctx context.Context, id uuid.UUID) (domain.Event, error)
 }
 
 type BookingService interface {

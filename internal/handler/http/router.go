@@ -25,6 +25,7 @@ func (h *Handler) Routes() http.Handler {
 		_, _ = w.Write([]byte("ok"))
 	})
 	r.Post("/events", h.createEvent)
+	r.Get("/events/{id}", h.getEvent)
 
 	return r
 }
