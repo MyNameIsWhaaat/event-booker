@@ -11,6 +11,7 @@ import (
 
 type eventService struct {
 	events repository.EventRepository
+	bookings repository.BookingRepository
 }
 
 type CreateEventRequest struct {
@@ -21,8 +22,17 @@ type CreateEventRequest struct {
 	BookingTTLSeconds int
 }
 
-func NewEventService(events repository.EventRepository) EventService {
-	return &eventService{events: events}
+type EventDetails struct {
+	Event domain.Event
+	Stats struct {
+		Pending   int `json:"pending"`
+		Confirmed int `json:"confirmed"`
+		FreeSeats int `json:"free_seats"`
+	} `json:"stats"`
+}
+
+func NewEventService(events repository.EventRepository, bookings repository.BookingRepository) EventService {
+	return &eventService{events: events, bookings: bookings}
 }
 
 func (s *eventService) CreateEvent(ctx context.Context, req CreateEventRequest) (uuid.UUID, error) {
@@ -47,6 +57,30 @@ func (s *eventService) CreateEvent(ctx context.Context, req CreateEventRequest) 
 	return s.events.Create(ctx, e)
 }
 
-func (s *eventService) GetEvent(ctx context.Context, id uuid.UUID) (domain.Event, error) {
-	return s.events.GetByID(ctx, id)
+// func (s *eventService) GetEvent(ctx context.Context, id uuid.UUID) (domain.Event, error) {
+// 	return s.events.GetByID(ctx, id)
+// }
+
+func (s *eventService) GetEventDetails(ctx context.Context, id uuid.UUID) (EventDetails, error) {
+	ev, err := s.events.GetByID(ctx, id)
+	if err != nil {
+		return EventDetails{}, err
+	}
+
+	stats, err := s.bookings.GetEventStats(ctx, id)
+	if err != nil {
+		return EventDetails{}, err
+	}
+
+	free := ev.Capacity - stats.Pending - stats.Confirmed
+	if free < 0 {
+		free = 0
+	}
+
+	var d EventDetails
+	d.Event = ev
+	d.Stats.Pending = stats.Pending
+	d.Stats.Confirmed = stats.Confirmed
+	d.Stats.FreeSeats = free
+	return d, nil
 }

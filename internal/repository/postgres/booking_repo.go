@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/MyNameIsWhaaat/event-booker/internal/domain"
+	"github.com/MyNameIsWhaaat/event-booker/internal/repository"
 	"github.com/google/uuid"
 )
 
@@ -92,4 +93,41 @@ func (r *BookingRepository) ConfirmPending(
 		return domain.ErrBookingExpired
 	}
 	return domain.ErrBookingInvalidState
+}
+
+func (r *BookingRepository) CancelExpired(ctx context.Context, now time.Time) (int, error) {
+	const q = `
+		UPDATE bookings
+		SET status = 'cancelled',
+		    cancelled_at = $1
+		WHERE status = 'pending'
+		  AND expires_at <= $1
+	`
+
+	res, err := r.db.ExecContext(ctx, q, now)
+	if err != nil {
+		return 0, err
+	}
+
+	ra, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+	return int(ra), nil
+}
+
+func (r *BookingRepository) GetEventStats(ctx context.Context, eventID uuid.UUID) (repository.EventBookingStats, error) {
+	const q = `
+		SELECT
+			COUNT(*) FILTER (WHERE status = 'pending')   AS pending,
+			COUNT(*) FILTER (WHERE status = 'confirmed') AS confirmed
+		FROM bookings
+		WHERE event_id = $1
+	`
+
+	var s repository.EventBookingStats
+	if err := r.db.QueryRowContext(ctx, q, eventID).Scan(&s.Pending, &s.Confirmed); err != nil {
+		return repository.EventBookingStats{}, err
+	}
+	return s, nil
 }

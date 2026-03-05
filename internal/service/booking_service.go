@@ -83,3 +83,8 @@ func (s *bookingService) ConfirmBooking(ctx context.Context, eventID, bookingID 
 		return s.bookings.ConfirmPending(ctx, tx, eventID, bookingID, now)
 	})
 }
+
+func (s *bookingService) CancelExpired(ctx context.Context) (int, error) {
+	now := time.Now().UTC()
+	return s.bookings.CancelExpired(ctx, now)
+}

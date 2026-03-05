@@ -35,7 +35,7 @@ func main() {
 
 	srv := postgres.NewEventRepository(pool)
 	bookingsrv := postgres.NewBookingRepository(pool)
-	eventSvc := service.NewEventService(srv)
+	eventSvc := service.NewEventService(srv, bookingsrv)
 	bookingSvc := service.NewBookingService(tx, srv, bookingsrv)
 	handler := handler.New(eventSvc, bookingSvc)
 

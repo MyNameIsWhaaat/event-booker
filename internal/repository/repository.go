@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"time"
 
-	// "database/sql"
-	// "time"
-
 	"github.com/MyNameIsWhaaat/event-booker/internal/domain"
 	"github.com/google/uuid"
 )
+
+type EventBookingStats struct {
+	Pending   int
+	Confirmed int
+}
 
 type EventRepository interface {
 	Create(ctx context.Context, e domain.Event) (uuid.UUID, error)
@@ -22,13 +24,8 @@ type BookingRepository interface {
 	CountActiveByEvent(ctx context.Context, tx *sql.Tx, eventID uuid.UUID) (int, error)
 	CreatePending(ctx context.Context, tx *sql.Tx, b domain.Booking) (uuid.UUID, error)
 	ConfirmPending(ctx context.Context, tx *sql.Tx, eventID, bookingID uuid.UUID, now time.Time) error
-	// CancelExpired(ctx context.Context, now time.Time) (int, error)
-}
-
-type Querier interface {
-	// ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-	// QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-	// QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+	CancelExpired(ctx context.Context, now time.Time) (int, error)
+	GetEventStats(ctx context.Context, eventID uuid.UUID) (EventBookingStats, error)
 }
 
 type Repositories struct {

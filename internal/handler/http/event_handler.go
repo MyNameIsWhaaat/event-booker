@@ -59,7 +59,7 @@ func (h *Handler) getEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ev, err := h.eventSvc.GetEvent(r.Context(), id)
+	details, err := h.eventSvc.GetEventDetails(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, domain.ErrEventNotFound) {
 			http.Error(w, "event not found", http.StatusNotFound)
@@ -70,5 +70,5 @@ func (h *Handler) getEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	_ = json.NewEncoder(w).Encode(ev)
+	_ = json.NewEncoder(w).Encode(details)
 }
