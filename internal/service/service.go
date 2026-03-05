@@ -13,7 +13,8 @@ type EventService interface {
 }
 
 type BookingService interface {
-	
+	BookSeat(ctx context.Context, eventID uuid.UUID, userEmail string) (BookSeatResult, error)
+	ConfirmBooking(ctx context.Context, eventID, bookingID uuid.UUID) error
 }
 
 type Services struct {

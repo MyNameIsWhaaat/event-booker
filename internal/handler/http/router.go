@@ -26,6 +26,8 @@ func (h *Handler) Routes() http.Handler {
 	})
 	r.Post("/events", h.createEvent)
 	r.Get("/events/{id}", h.getEvent)
+	r.Post("/events/{id}/book", h.bookSeat)
+	r.Post("/events/{id}/confirm", h.confirmBooking)
 
 	return r
 }

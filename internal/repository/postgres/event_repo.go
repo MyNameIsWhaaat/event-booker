@@ -68,3 +68,36 @@ func (r *EventRepository) GetByID(ctx context.Context, id uuid.UUID) (domain.Eve
 	e.CreatedAt = createdAt
 	return e, nil
 }
+
+func (r *EventRepository) GetByIDForUpdate(ctx context.Context, tx *sql.Tx, id uuid.UUID) (domain.Event, error) {
+	const q = `
+		SELECT id, title, starts_at, capacity, requires_payment, booking_ttl_seconds, created_at
+		FROM events
+		WHERE id = $1
+		FOR UPDATE
+	`
+
+	var e domain.Event
+	var eid uuid.UUID
+	var createdAt time.Time
+
+	err := tx.QueryRowContext(ctx, q, id).Scan(
+		&eid,
+		&e.Title,
+		&e.StartsAt,
+		&e.Capacity,
+		&e.RequiresPayment,
+		&e.BookingTTLSeconds,
+		&createdAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.Event{}, domain.ErrEventNotFound
+		}
+		return domain.Event{}, err
+	}
+
+	e.ID = eid.String()
+	e.CreatedAt = createdAt
+	return e, nil
+}

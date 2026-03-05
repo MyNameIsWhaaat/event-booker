@@ -31,9 +31,13 @@ func main() {
 	}
 	defer pool.Close()
 
+	tx := postgres.NewTransactor(pool)
+
 	srv := postgres.NewEventRepository(pool)
+	bookingsrv := postgres.NewBookingRepository(pool)
 	eventSvc := service.NewEventService(srv)
-	handler := handler.New(eventSvc, nil)
+	bookingSvc := service.NewBookingService(tx, srv, bookingsrv)
+	handler := handler.New(eventSvc, bookingSvc)
 
 	server := &http.Server{
 		Addr:              httpAddr,
