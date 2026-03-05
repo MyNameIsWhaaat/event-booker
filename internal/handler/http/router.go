@@ -3,15 +3,17 @@ package http
 import (
 	"net/http"
 
+	"github.com/MyNameIsWhaaat/event-booker/internal/service"
 	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
-	
+	eventSvc   service.EventService
+	bookingSvc service.BookingService
 }
 
-func New() *Handler {
-	return &Handler{}
+func New(eventSvc service.EventService, bookingSvc service.BookingService) *Handler {
+	return &Handler{eventSvc: eventSvc, bookingSvc: bookingSvc}
 }
 
 func (h *Handler) Routes() http.Handler {
@@ -22,6 +24,7 @@ func (h *Handler) Routes() http.Handler {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
+	r.Post("/events", h.createEvent)
 
 	return r
 }

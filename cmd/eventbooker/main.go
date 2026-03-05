@@ -12,6 +12,7 @@ import (
 	"github.com/MyNameIsWhaaat/event-booker/internal/config"
 	handler "github.com/MyNameIsWhaaat/event-booker/internal/handler/http"
 	"github.com/MyNameIsWhaaat/event-booker/internal/repository/postgres"
+	"github.com/MyNameIsWhaaat/event-booker/internal/service"
 	"github.com/joho/godotenv"
 )
 
@@ -30,7 +31,9 @@ func main() {
 	}
 	defer pool.Close()
 
-	handler := handler.New()
+	srv := postgres.NewEventRepository(pool)
+	eventSvc := service.NewEventService(srv)
+	handler := handler.New(eventSvc, nil)
 
 	server := &http.Server{
 		Addr:              httpAddr,
