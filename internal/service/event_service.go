@@ -84,3 +84,45 @@ func (s *eventService) GetEventDetails(ctx context.Context, id uuid.UUID) (Event
 	d.Stats.FreeSeats = free
 	return d, nil
 }
+
+func (s *eventService) ListEvents(ctx context.Context, limit, offset int) ([]EventDetails, error) {
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	events, err := s.events.List(ctx, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]EventDetails, 0, len(events))
+	for _, ev := range events {
+		eventID, err := uuid.Parse(ev.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		stats, err := s.bookings.GetEventStats(ctx, eventID)
+		if err != nil {
+			return nil, err
+		}
+
+		free := ev.Capacity - stats.Pending - stats.Confirmed
+		if free < 0 {
+			free = 0
+		}
+
+		var d EventDetails
+		d.Event = ev
+		d.Stats.Pending = stats.Pending
+		d.Stats.Confirmed = stats.Confirmed
+		d.Stats.FreeSeats = free
+
+		out = append(out, d)
+	}
+
+	return out, nil
+}

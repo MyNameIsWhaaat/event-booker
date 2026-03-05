@@ -22,7 +22,7 @@ type BookSeatResult struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-func NewBookingService(tx repository.Transactor,events repository.EventRepository,bookings repository.BookingRepository,) BookingService {
+func NewBookingService(tx repository.Transactor, events repository.EventRepository, bookings repository.BookingRepository) BookingService {
 	return &bookingService{
 		tx:       tx,
 		events:   events,
@@ -50,6 +50,23 @@ func (s *bookingService) BookSeat(ctx context.Context, eventID uuid.UUID, userEm
 		}
 		if active >= ev.Capacity {
 			return domain.ErrNoSeats
+		}
+
+		if !ev.RequiresPayment {
+			bookingID, err := s.bookings.CreateConfirmed(ctx, tx, domain.Booking{
+				EventID:   eventID.String(),
+				UserEmail: userEmail,
+			}, now)
+			if err != nil {
+				return err
+			}
+
+			res = BookSeatResult{
+				BookingID: bookingID,
+				Status:    "confirmed",
+				ExpiresAt: now,
+			}
+			return nil
 		}
 
 		expiresAt := now.Add(time.Duration(ev.BookingTTLSeconds) * time.Second)

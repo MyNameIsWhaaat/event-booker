@@ -101,3 +101,50 @@ func (r *EventRepository) GetByIDForUpdate(ctx context.Context, tx *sql.Tx, id u
 	e.CreatedAt = createdAt
 	return e, nil
 }
+
+func (r *EventRepository) List(ctx context.Context, limit, offset int) ([]domain.Event, error) {
+	const q = `
+		SELECT id, title, starts_at, capacity, requires_payment, booking_ttl_seconds, created_at
+		FROM events
+		ORDER BY starts_at ASC
+		LIMIT $1 OFFSET $2
+	`
+
+	rows, err := r.db.QueryContext(ctx, q, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]domain.Event, 0, limit)
+
+	for rows.Next() {
+		var (
+			e        domain.Event
+			id       uuid.UUID
+			createdAt time.Time
+		)
+
+		if err := rows.Scan(
+			&id,
+			&e.Title,
+			&e.StartsAt,
+			&e.Capacity,
+			&e.RequiresPayment,
+			&e.BookingTTLSeconds,
+			&createdAt,
+		); err != nil {
+			return nil, err
+		}
+
+		e.ID = id.String()
+		e.CreatedAt = createdAt
+		out = append(out, e)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}

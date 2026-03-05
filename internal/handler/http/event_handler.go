@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/MyNameIsWhaaat/event-booker/internal/domain"
@@ -71,4 +72,33 @@ func (h *Handler) getEvent(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	_ = json.NewEncoder(w).Encode(details)
+}
+
+func (h *Handler) listEvents(w http.ResponseWriter, r *http.Request) {
+	limit := 50
+	offset := 0
+
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			limit = n
+		}
+	}
+	if v := r.URL.Query().Get("offset"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			offset = n
+		}
+	}
+
+	items, err := h.eventSvc.ListEvents(r.Context(), limit, offset)
+	if err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"items": items,
+		"limit": limit,
+		"offset": offset,
+	})
 }

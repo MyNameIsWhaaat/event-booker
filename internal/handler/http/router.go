@@ -28,6 +28,11 @@ func (h *Handler) Routes() http.Handler {
 	r.Get("/events/{id}", h.getEvent)
 	r.Post("/events/{id}/book", h.bookSeat)
 	r.Post("/events/{id}/confirm", h.confirmBooking)
+	r.Get("/events", h.listEvents)
+
+	fs := http.FileServer(http.Dir("internal/web"))
+	r.Handle("/ui/*", http.StripPrefix("/ui", fs))
+	// r.Handle("/*", http.FileServer(http.Dir("./internal/web")))
 
 	return r
 }

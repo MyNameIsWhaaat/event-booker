@@ -131,3 +131,17 @@ func (r *BookingRepository) GetEventStats(ctx context.Context, eventID uuid.UUID
 	}
 	return s, nil
 }
+
+func (r *BookingRepository) CreateConfirmed(ctx context.Context, tx *sql.Tx, b domain.Booking, now time.Time) (uuid.UUID, error) {
+	const q = `
+		INSERT INTO bookings (event_id, user_email, status, expires_at, confirmed_at)
+		VALUES ($1, $2, 'confirmed', $3, $3)
+		RETURNING id
+	`
+
+	var id uuid.UUID
+	if err := tx.QueryRowContext(ctx, q, b.EventID, b.UserEmail, now).Scan(&id); err != nil {
+		return uuid.Nil, err
+	}
+	return id, nil
+}
