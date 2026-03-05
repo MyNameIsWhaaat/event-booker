@@ -47,6 +47,20 @@ services:
     volumes:
       - appdata:/data
 
+  migrate:
+    image: migrate/migrate:v4.17.1
+    container_name: eventbooker-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations:ro
+    command:
+      - "-path=/migrations"
+      - "-database=${DATABASE_URL}"
+      - "up"
+    restart: "no"
+
 volumes:
   pgdata:
   appdata:
