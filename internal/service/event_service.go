@@ -57,9 +57,9 @@ func (s *eventService) CreateEvent(ctx context.Context, req CreateEventRequest) 
 	return s.events.Create(ctx, e)
 }
 
-// func (s *eventService) GetEvent(ctx context.Context, id uuid.UUID) (domain.Event, error) {
-// 	return s.events.GetByID(ctx, id)
-// }
+func (s *eventService) GetEvent(ctx context.Context, id uuid.UUID) (domain.Event, error) {
+	return s.events.GetByID(ctx, id)
+}
 
 func (s *eventService) GetEventDetails(ctx context.Context, id uuid.UUID) (EventDetails, error) {
 	ev, err := s.events.GetByID(ctx, id)

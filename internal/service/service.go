@@ -11,6 +11,7 @@ type EventService interface {
 	CreateEvent(ctx context.Context, req CreateEventRequest) (uuid.UUID, error)
 	GetEventDetails(ctx context.Context, id uuid.UUID) (EventDetails, error)
 	ListEvents(ctx context.Context, limit, offset int) ([]EventDetails, error)
+	GetEvent(ctx context.Context, id uuid.UUID) (domain.Event, error)
 }
 
 type BookingService interface {
