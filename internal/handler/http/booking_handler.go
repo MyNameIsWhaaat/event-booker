@@ -49,6 +49,10 @@ func (h *Handler) bookSeat(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "no free seats", http.StatusConflict)
 			return
 		}
+		if errors.Is(err, domain.ErrAlreadyBooked) {
+			http.Error(w, "user already has booking for this event", http.StatusConflict)
+			return
+		}
 
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
@@ -93,6 +97,9 @@ func (h *Handler) confirmBooking(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, domain.ErrBookingInvalidState):
 			http.Error(w, "booking invalid state", http.StatusConflict)
 			return
+		case errors.Is(err, domain.ErrConfirmationNotRequired):
+			http.Error(w, "confirmation is not required for this event", http.StatusConflict)
+			return
 		default:
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
@@ -101,4 +108,24 @@ func (h *Handler) confirmBooking(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "confirmed"})
+}
+
+func (h *Handler) listBookingsByEvent(w http.ResponseWriter, r *http.Request) {
+	eventIDStr := chi.URLParam(r, "id")
+	eventID, err := uuid.Parse(eventIDStr)
+	if err != nil {
+		http.Error(w, "invalid event id", http.StatusBadRequest)
+		return
+	}
+
+	items, err := h.bookingSvc.ListByEvent(r.Context(), eventID)
+	if err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"items": items,
+	})
 }

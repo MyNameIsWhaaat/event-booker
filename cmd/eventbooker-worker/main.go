@@ -31,8 +31,9 @@ func main() {
 	tx := postgres.NewTransactor(db)
 	eventRepo := postgres.NewEventRepository(db)
 	bookingRepo := postgres.NewBookingRepository(db)
+	userRepo := postgres.NewUserRepository(db)
 
-	bookingSvc := service.NewBookingService(tx, eventRepo, bookingRepo)
+	bookingSvc := service.NewBookingService(tx, eventRepo, bookingRepo, userRepo)
 
 	expirer := worker.NewBookingExpirer(bookingSvc, 5*time.Second)
 	expirer.Run(ctx)

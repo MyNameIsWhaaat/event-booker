@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type BookingStatus string
 
@@ -13,6 +17,7 @@ const (
 type Booking struct {
 	ID          string
 	EventID     string
+	UserID 	    uuid.UUID
 	UserEmail   string
 	Status      BookingStatus
 	CreatedAt   time.Time

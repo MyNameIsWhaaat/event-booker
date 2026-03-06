@@ -9,6 +9,7 @@ import (
 	"github.com/MyNameIsWhaaat/event-booker/internal/domain"
 	"github.com/MyNameIsWhaaat/event-booker/internal/repository"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type BookingRepository struct {
@@ -36,15 +37,31 @@ func (r *BookingRepository) CountActiveByEvent(ctx context.Context, tx *sql.Tx, 
 
 func (r *BookingRepository) CreatePending(ctx context.Context, tx *sql.Tx, b domain.Booking) (uuid.UUID, error) {
 	const q = `
-		INSERT INTO bookings (event_id, user_email, status, expires_at)
-		VALUES ($1, $2, 'pending', $3)
+		INSERT INTO bookings (event_id, user_id, user_email, status, expires_at)
+		VALUES ($1, $2, $3, 'pending', $4)
 		RETURNING id
 	`
 
 	var id uuid.UUID
-	if err := tx.QueryRowContext(ctx, q, b.EventID, b.UserEmail, b.ExpiresAt).Scan(&id); err != nil {
+	err := tx.QueryRowContext(ctx, q,
+		b.EventID,
+		b.UserID,
+		b.UserEmail,
+		b.ExpiresAt,
+	).Scan(&id)
+
+	if err != nil {
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "bookings_event_user_active_uidx" {
+				return uuid.Nil, domain.ErrAlreadyBooked
+			}
+		}
+
 		return uuid.Nil, err
 	}
+
 	return id, nil
 }
 
@@ -134,14 +151,67 @@ func (r *BookingRepository) GetEventStats(ctx context.Context, eventID uuid.UUID
 
 func (r *BookingRepository) CreateConfirmed(ctx context.Context, tx *sql.Tx, b domain.Booking, now time.Time) (uuid.UUID, error) {
 	const q = `
-		INSERT INTO bookings (event_id, user_email, status, expires_at, confirmed_at)
-		VALUES ($1, $2, 'confirmed', $3, $3)
+		INSERT INTO bookings (event_id, user_id, user_email, status, expires_at, confirmed_at)
+		VALUES ($1, $2, $3, 'confirmed', $4, $4)
 		RETURNING id
 	`
 
 	var id uuid.UUID
-	if err := tx.QueryRowContext(ctx, q, b.EventID, b.UserEmail, now).Scan(&id); err != nil {
+	if err := tx.QueryRowContext(ctx, q, b.EventID, b.UserID, b.UserEmail, now).Scan(&id); err != nil {
 		return uuid.Nil, err
 	}
 	return id, nil
+}
+
+func (r *BookingRepository) ListByEvent(ctx context.Context, eventID uuid.UUID) ([]domain.Booking, error) {
+	const q = `
+		SELECT
+			id,
+			event_id,
+			user_id,
+			user_email,
+			status,
+			created_at,
+			expires_at,
+			confirmed_at,
+			cancelled_at
+		FROM bookings
+		WHERE event_id = $1
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, q, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []domain.Booking
+
+	for rows.Next() {
+		var b domain.Booking
+
+		err := rows.Scan(
+			&b.ID,
+			&b.EventID,
+			&b.UserID,
+			&b.UserEmail,
+			&b.Status,
+			&b.CreatedAt,
+			&b.ExpiresAt,
+			&b.ConfirmedAt,
+			&b.CancelledAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, b)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
 }

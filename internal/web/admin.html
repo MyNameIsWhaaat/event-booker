@@ -1,58 +1,49 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <meta charset="UTF-8">
-    <title>Admin</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Admin</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-    <h1>Admin Panel</h1>
+  <h1>Admin Panel</h1>
 
-    <h2>Create Event</h2>
+  <h2>Create Event</h2>
 
-    <form id="createForm">
-        <input placeholder="Title" id="title">
+  <form id="createForm">
+    <input placeholder="Title" id="title">
+    <input placeholder="Starts (RFC3339)" id="starts">
+    <input placeholder="Capacity" id="capacity">
+    <input placeholder="TTL seconds" id="ttl">
 
-        <input placeholder="Starts (RFC3339)" id="starts">
+    <label>
+      Requires payment
+      <input type="checkbox" id="payment" checked>
+    </label>
 
-        <input placeholder="Capacity" id="capacity">
+    <button type="submit">Create</button>
+  </form>
 
-        <input placeholder="TTL seconds" id="ttl">
+  <div id="message"></div>
 
-        <label>
-            Requires payment
-            <input type="checkbox" id="payment" checked>
-        </label>
+  <h2>Events</h2>
 
-        <button type="submit">Create</button>
+  <table id="events">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Starts</th>
+        <th>Capacity</th>
+        <th>Pending</th>
+        <th>Confirmed</th>
+        <th>Free</th>
+        <th>Bookings</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-    </form>
-
-    <div id="message"></div>
-
-    <h2>Events</h2>
-
-    <table id="events">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Starts</th>
-                <th>Capacity</th>
-                <th>Pending</th>
-                <th>Confirmed</th>
-                <th>Free</th>
-            </tr>
-        </thead>
-
-        <tbody></tbody>
-
-    </table>
-
-    <script src="admin.js"></script>
-
+  <script src="admin.js"></script>
 </body>
-
 </html>

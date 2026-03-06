@@ -27,3 +27,20 @@ button {
 padding: 6px 10px;
 cursor: pointer;
 }
+
+.nested-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+}
+
+.nested-table td,
+.nested-table th {
+  border: 1px solid #ccc;
+  padding: 6px;
+  font-size: 14px;
+}
+
+.nested-table th {
+  background: #fafafa;
+}

@@ -14,6 +14,12 @@ type EventBookingStats struct {
 	Confirmed int
 }
 
+type UserRepository interface {
+	GetByEmail(ctx context.Context, email string) (domain.User, error)
+	Create(ctx context.Context, email string) (domain.User, error)
+	GetOrCreateByEmail(ctx context.Context, email string) (domain.User, error)
+}
+
 type EventRepository interface {
 	Create(ctx context.Context, e domain.Event) (uuid.UUID, error)
 	GetByID(ctx context.Context, id uuid.UUID) (domain.Event, error)
@@ -28,6 +34,7 @@ type BookingRepository interface {
 	CancelExpired(ctx context.Context, now time.Time) (int, error)
 	GetEventStats(ctx context.Context, eventID uuid.UUID) (EventBookingStats, error)
 	CreateConfirmed(ctx context.Context, tx *sql.Tx, b domain.Booking, now time.Time) (uuid.UUID, error)
+	ListByEvent(ctx context.Context, eventID uuid.UUID) ([]domain.Booking, error)
 }
 
 type Repositories struct {

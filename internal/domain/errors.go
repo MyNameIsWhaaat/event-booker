@@ -13,6 +13,9 @@ var (
 	ErrBookingNotFound     = errors.New("booking not found")
 	ErrBookingExpired      = errors.New("booking expired")
 	ErrBookingInvalidState = errors.New("booking invalid state")
+	ErrUserNotFound = errors.New("user not found")
+	ErrAlreadyBooked = errors.New("user already has booking for this event")
+	ErrConfirmationNotRequired = errors.New("confirmation is not required for this event")
 )
 
 func (e ValidationError) Error() string { return e.Msg }
