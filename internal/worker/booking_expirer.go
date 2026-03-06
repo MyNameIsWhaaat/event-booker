@@ -32,13 +32,14 @@ func (w *BookingExpirer) Run(ctx context.Context) {
 			log.Printf("booking expirer stopped: %v", ctx.Err())
 			return
 		case <-ticker.C:
-			n, err := w.bookingSvc.CancelExpired(ctx)
+			items, err := w.bookingSvc.CancelExpired(ctx)
 			if err != nil {
 				log.Printf("cancel expired error: %v", err)
 				continue
 			}
-			if n > 0 {
-				log.Printf("cancelled expired bookings: %d", n)
+
+			if len(items) > 0 {
+				log.Printf("cancelled expired bookings: %d", len(items))
 			}
 		}
 	}

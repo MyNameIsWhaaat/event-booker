@@ -119,7 +119,7 @@ func (s *bookingService) ConfirmBooking(ctx context.Context, eventID, bookingID 
 	})
 }
 
-func (s *bookingService) CancelExpired(ctx context.Context) (int, error) {
+func (s *bookingService) CancelExpired(ctx context.Context) ([]domain.Booking, error) {
 	now := time.Now().UTC()
 	return s.bookings.CancelExpired(ctx, now)
 }

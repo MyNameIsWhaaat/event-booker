@@ -112,25 +112,59 @@ func (r *BookingRepository) ConfirmPending(
 	return domain.ErrBookingInvalidState
 }
 
-func (r *BookingRepository) CancelExpired(ctx context.Context, now time.Time) (int, error) {
+func (r *BookingRepository) CancelExpired(ctx context.Context, now time.Time) ([]domain.Booking, error) {
 	const q = `
 		UPDATE bookings
 		SET status = 'cancelled',
 		    cancelled_at = $1
 		WHERE status = 'pending'
 		  AND expires_at <= $1
+		RETURNING
+			id,
+			event_id,
+			user_id,
+			user_email,
+			status,
+			created_at,
+			expires_at,
+			confirmed_at,
+			cancelled_at
 	`
 
-	res, err := r.db.ExecContext(ctx, q, now)
+	rows, err := r.db.QueryContext(ctx, q, now)
 	if err != nil {
-		return 0, err
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []domain.Booking
+
+	for rows.Next() {
+		var b domain.Booking
+
+		err := rows.Scan(
+			&b.ID,
+			&b.EventID,
+			&b.UserID,
+			&b.UserEmail,
+			&b.Status,
+			&b.CreatedAt,
+			&b.ExpiresAt,
+			&b.ConfirmedAt,
+			&b.CancelledAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, b)
 	}
 
-	ra, err := res.RowsAffected()
-	if err != nil {
-		return 0, err
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
-	return int(ra), nil
+
+	return items, nil
 }
 
 func (r *BookingRepository) GetEventStats(ctx context.Context, eventID uuid.UUID) (repository.EventBookingStats, error) {

@@ -31,7 +31,7 @@ type BookingRepository interface {
 	CountActiveByEvent(ctx context.Context, tx *sql.Tx, eventID uuid.UUID) (int, error)
 	CreatePending(ctx context.Context, tx *sql.Tx, b domain.Booking) (uuid.UUID, error)
 	ConfirmPending(ctx context.Context, tx *sql.Tx, eventID, bookingID uuid.UUID, now time.Time) error
-	CancelExpired(ctx context.Context, now time.Time) (int, error)
+	CancelExpired(ctx context.Context, now time.Time) ([]domain.Booking, error)
 	GetEventStats(ctx context.Context, eventID uuid.UUID) (EventBookingStats, error)
 	CreateConfirmed(ctx context.Context, tx *sql.Tx, b domain.Booking, now time.Time) (uuid.UUID, error)
 	ListByEvent(ctx context.Context, eventID uuid.UUID) ([]domain.Booking, error)

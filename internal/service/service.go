@@ -16,7 +16,7 @@ type EventService interface {
 type BookingService interface {
 	BookSeat(ctx context.Context, eventID uuid.UUID, userEmail string) (BookSeatResult, error)
 	ConfirmBooking(ctx context.Context, eventID, bookingID uuid.UUID) error
-	CancelExpired(ctx context.Context) (int, error)
+	CancelExpired(ctx context.Context) ([]domain.Booking, error)
 	ListByEvent(ctx context.Context, eventID uuid.UUID) ([]domain.Booking, error)
 }
 
