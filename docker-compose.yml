@@ -43,6 +43,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      mailhog:
+        condition: service_started
     restart: unless-stopped
     volumes:
       - appdata:/data
@@ -60,6 +64,13 @@ services:
       - "-database=${DATABASE_URL}"
       - "up"
     restart: "no"
+  mailhog:
+    image: mailhog/mailhog
+    container_name: eventbooker-mailhog
+    ports:
+    - "8025:8025"
+    - "1025:1025"
+    restart: unless-stopped
 
 volumes:
   pgdata:
