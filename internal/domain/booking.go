@@ -17,7 +17,7 @@ const (
 type Booking struct {
 	ID          string
 	EventID     string
-	UserID 	    uuid.UUID
+	UserID      uuid.UUID
 	UserEmail   string
 	Status      BookingStatus
 	CreatedAt   time.Time

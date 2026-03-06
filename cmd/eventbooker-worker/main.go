@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	dsn := os.Getenv("DATABASE_URL")

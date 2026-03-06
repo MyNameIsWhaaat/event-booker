@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
- 
+
 	"github.com/MyNameIsWhaaat/event-booker/internal/domain"
 	"github.com/google/uuid"
 )

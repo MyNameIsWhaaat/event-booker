@@ -120,8 +120,8 @@ func (r *EventRepository) List(ctx context.Context, limit, offset int) ([]domain
 
 	for rows.Next() {
 		var (
-			e        domain.Event
-			id       uuid.UUID
+			e         domain.Event
+			id        uuid.UUID
 			createdAt time.Time
 		)
 

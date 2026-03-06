@@ -17,13 +17,12 @@ func Load() Config {
 	_ = godotenv.Load()
 
 	cfg := Config{
-		HTTPAddr:   getenv("HTTP_ADDR", ":8080"),
+		HTTPAddr: getenv("HTTP_ADDR", ":8080"),
 		PGDSN: firstNonEmpty(
 			os.Getenv("PG_DSN"),
 			os.Getenv("DB_URL"),
 			"",
 		),
-
 	}
 
 	if cfg.PGDSN == "" {
