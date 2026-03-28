@@ -2,10 +2,9 @@ package config
 
 import (
 	"log"
-	"os"
 	"strings"
 
-	"github.com/joho/godotenv"
+	wconfig "github.com/wb-go/wbf/config"
 )
 
 type Config struct {
@@ -14,30 +13,26 @@ type Config struct {
 }
 
 func Load() Config {
-	_ = godotenv.Load()
+	cfg := wconfig.New()
+	_ = cfg.LoadEnvFiles(".env")
+	cfg.EnableEnv("")
 
-	cfg := Config{
-		HTTPAddr: getenv("HTTP_ADDR", ":8080"),
-		PGDSN: firstNonEmpty(
-			os.Getenv("PG_DSN"),
-			os.Getenv("DB_URL"),
-			"",
-		),
-	}
+	cfg.SetDefault("HTTP_ADDR", ":8080")
 
-	if cfg.PGDSN == "" {
+	httpAddr := cfg.GetString("HTTP_ADDR")
+	pgDSN := firstNonEmpty(
+		cfg.GetString("PG_DSN"),
+		cfg.GetString("DB_URL"),
+	)
+
+	if pgDSN == "" {
 		log.Fatal("missing required env: PG_DSN (or DB_URL)")
 	}
 
-	return cfg
-}
-
-func getenv(k, def string) string {
-	v := strings.TrimSpace(os.Getenv(k))
-	if v == "" {
-		return def
+	return Config{
+		HTTPAddr: strings.TrimSpace(httpAddr),
+		PGDSN:    strings.TrimSpace(pgDSN),
 	}
-	return v
 }
 
 func firstNonEmpty(vals ...string) string {

@@ -2,27 +2,31 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/wb-go/wbf/dbpg"
 )
 
-func Connect(ctx context.Context, dsn string) (*sql.DB, error) {
-	db, err := sql.Open("pgx", dsn)
+func Connect(ctx context.Context, dsn string) (*dbpg.DB, error) {
+	opts := &dbpg.Options{
+		MaxOpenConns:    10,
+		MaxIdleConns:    1,
+		ConnMaxLifetime: 5 * time.Minute,
+	}
+
+	db, err := dbpg.New(dsn, nil, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(10)
-	db.SetMaxIdleConns(1)
-	db.SetConnMaxIdleTime(5 * time.Minute)
-
 	ctxPing, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	if err := db.PingContext(ctxPing); err != nil {
-		_ = db.Close()
+	if err := db.Master.PingContext(ctxPing); err != nil {
+		_ = db.Master.Close()
+		for _, slave := range db.Slaves {
+			_ = slave.Close()
+		}
 		return nil, err
 	}
 

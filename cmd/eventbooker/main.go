@@ -13,29 +13,32 @@ import (
 	handler "github.com/MyNameIsWhaaat/event-booker/internal/handler/http"
 	"github.com/MyNameIsWhaaat/event-booker/internal/repository/postgres"
 	"github.com/MyNameIsWhaaat/event-booker/internal/service"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	_ = godotenv.Load()
-
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	pgDSN := config.Load().PGDSN
-	httpAddr := config.Load().HTTPAddr
+	cfg := config.Load()
+	pgDSN := cfg.PGDSN
+	httpAddr := cfg.HTTPAddr
 
-	pool, err := postgres.Connect(ctx, pgDSN)
+	db, err := postgres.Connect(ctx, pgDSN)
 	if err != nil {
 		log.Fatalf("db connect error: %v", err)
 	}
-	defer pool.Close()
+	defer func() {
+		_ = db.Master.Close()
+		for _, slave := range db.Slaves {
+			_ = slave.Close()
+		}
+	}()
 
-	tx := postgres.NewTransactor(pool)
+	tx := postgres.NewTransactor(db)
 
-	srv := postgres.NewEventRepository(pool)
-	bookingsrv := postgres.NewBookingRepository(pool)
-	userRepo := postgres.NewUserRepository(pool)
+	srv := postgres.NewEventRepository(db.Master)
+	bookingsrv := postgres.NewBookingRepository(db.Master)
+	userRepo := postgres.NewUserRepository(db.Master)
 
 	eventSvc := service.NewEventService(srv, bookingsrv)
 	bookingSvc := service.NewBookingService(tx, srv, bookingsrv, userRepo)

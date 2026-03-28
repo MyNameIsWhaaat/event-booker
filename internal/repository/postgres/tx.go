@@ -3,37 +3,20 @@ package postgres
 import (
 	"context"
 	"database/sql"
+
+	"github.com/wb-go/wbf/dbpg"
 )
 
 type Transactor struct {
-	db *sql.DB
+	db *dbpg.DB
 }
 
-func NewTransactor(db *sql.DB) *Transactor {
+func NewTransactor(db *dbpg.DB) *Transactor {
 	return &Transactor{db: db}
 }
 
-func (t *Transactor) WithinTx(ctx context.Context, fn func(ctx context.Context, tx *sql.Tx) error) (err error) {
-	tx, err := t.db.BeginTx(ctx, &sql.TxOptions{
-		Isolation: sql.LevelReadCommitted,
-		ReadOnly:  false,
+func (t *Transactor) WithinTx(ctx context.Context, fn func(ctx context.Context, tx *sql.Tx) error) error {
+	return t.db.WithTx(ctx, func(tx *sql.Tx) error {
+		return fn(ctx, tx)
 	})
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if p := recover(); p != nil {
-			_ = tx.Rollback()
-			panic(p)
-		}
-		if err != nil {
-			_ = tx.Rollback()
-			return
-		}
-		err = tx.Commit()
-	}()
-
-	err = fn(ctx, tx)
-	return err
 }

@@ -27,12 +27,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("db connect: %v", err)
 	}
-	defer db.Close()
+	defer func() {
+		_ = db.Master.Close()
+		for _, slave := range db.Slaves {
+			_ = slave.Close()
+		}
+	}()
 
 	tx := postgres.NewTransactor(db)
-	eventRepo := postgres.NewEventRepository(db)
-	bookingRepo := postgres.NewBookingRepository(db)
-	userRepo := postgres.NewUserRepository(db)
+	eventRepo := postgres.NewEventRepository(db.Master)
+	bookingRepo := postgres.NewBookingRepository(db.Master)
+	userRepo := postgres.NewUserRepository(db.Master)
 
 	eventSvc := service.NewEventService(eventRepo, bookingRepo)
 	bookingSvc := service.NewBookingService(tx, eventRepo, bookingRepo, userRepo)
